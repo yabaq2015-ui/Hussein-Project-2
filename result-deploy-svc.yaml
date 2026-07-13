@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: result-deployment
+  labels:
+    app: result
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: result
+  template:
+    metadata:
+      labels:
+        app: result
+    spec:
+      containers:
+      - name: result
+        image: husseinyabaq/result-app:latest
+        ports:
+        - containerPort: 80
+          name: result-port
+        env:
+        - name: DB_HOST
+          value: "postgres-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: result-service
+  labels:
+    app: result
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5001
+    targetPort: 80
+  selector:
+    app: result

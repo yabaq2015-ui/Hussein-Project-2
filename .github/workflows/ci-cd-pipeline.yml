@@ -1,0 +1,59 @@
+name: EKS 3-Tier App CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering from the GitHub UI
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Clone the repository code onto the GitHub runner
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Log in to Docker Hub using repository secrets
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # 3. Build and Push the updated Docker images for all 3 components
+    - name: Build and Push App Images
+      run: |
+        docker build -t husseinyabaq/voting-app:latest ./vote
+        docker build -t husseinyabaq/result-app:latest ./result
+        docker build -t husseinyabaq/worker-app:latest ./worker
+        
+        docker push husseinyabaq/voting-app:latest
+        docker push husseinyabaq/result-app:latest
+        docker push husseinyabaq/worker-app:latest
+
+    # 4. Authenticate with AWS using repository secrets
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+
+    # 5. Point Kubectl directly to your remote EKS cluster
+    - name: Update Kubeconfig for EKS
+      run: |
+        aws eks update-kubeconfig --region eu-central-1 --name romain-voting-app-cluster
+
+    # 6. Apply your existing manifests to the cluster
+    - name: Apply Kubernetes Manifests
+      run: |
+        kubectl apply -f K8s/
+
+    # 7. Force EKS to roll out the newly built ':latest' images immediately
+    - name: Force Rollout and Restart Pods
+      run: |
+        kubectl rollout restart deployment/vote-deployment
+        kubectl rollout restart deployment/result-deployment
+        kubectl rollout restart deployment/worker-deployment
