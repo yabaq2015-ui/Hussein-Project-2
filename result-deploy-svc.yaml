@@ -23,6 +23,14 @@ spec:
         env:
         - name: DB_HOST
           value: "postgres-service"
+        - name: PG_HOST
+          value: "postgres-service"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "postgres"
 ---
 apiVersion: v1
 kind: Service
