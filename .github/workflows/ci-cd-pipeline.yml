@@ -26,7 +26,7 @@ jobs:
     # 3. Connect to your EKS Cluster (Updated Cluster Name!)
     - name: Update Kubeconfig for EKS
       run: |
-        aws eks update-kubeconfig --region eu-central-1 --name eks-hussein-project-2
+        aws eks update-kubeconfig --region eu-central-1 --name eks-eks-hussein-project-2
 
     # 4. Deploy all your working manifests directly to EKS
     - name: Apply Kubernetes Manifests
